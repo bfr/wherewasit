@@ -4,6 +4,32 @@
 // 3. Service worker registration
 
 (function () {
+  // ── 0. Immediate loading state for long server requests ─────────────
+  const loadingOverlay = document.getElementById("loading-overlay");
+  const loadingSub = document.getElementById("loading-subtext");
+  function showLoading(message) {
+    if (!loadingOverlay) return;
+    if (loadingSub && message) loadingSub.textContent = message;
+    loadingOverlay.hidden = false;
+  }
+
+  document.querySelectorAll("form.result-form").forEach((form) => {
+    form.addEventListener("submit", () => {
+      const titleInput = form.querySelector('input[name="selected_title"]');
+      const title = titleInput ? titleInput.value : "";
+      const msg = title
+        ? `Loading ${title} availability`
+        : "Fetching title data from JustWatch";
+      showLoading(msg);
+    });
+  });
+  const filtersForm = document.getElementById("filters-form");
+  if (filtersForm) {
+    filtersForm.addEventListener("submit", () => {
+      showLoading("Applying filters and refreshing offers");
+    });
+  }
+
   // ── 1. Pill checkbox visual sync ────────────────────────────────────
   document.querySelectorAll("label.checkbox-pill").forEach((label) => {
     const cb = label.querySelector("input[type=checkbox]");

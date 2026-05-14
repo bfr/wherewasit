@@ -5,6 +5,7 @@ from collections import defaultdict
 from datetime import timedelta
 from functools import lru_cache
 import os
+import time
 from typing import Iterable
 
 from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
@@ -15,9 +16,12 @@ app = Flask(__name__)
 DEFAULT_SEARCH_COUNTRY = "US"
 DEFAULT_LANGUAGE = "en"
 APP_PASSWORD = os.getenv("MSNO_PASSWORD", "").strip()
+OFFERS_CACHE_TTL_SECONDS = int(os.getenv("MSNO_OFFERS_CACHE_TTL_SECONDS", "3600"))
 app.secret_key = os.getenv("MSNO_SECRET_KEY", "msno-dev-secret-change-me")
 app.config["SESSION_PERMANENT"] = True
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=365)
+
+_OFFERS_CACHE: dict[tuple[str, str, tuple[str, ...]], tuple[float, dict[str, list]]] = {}
 
 JUSTWATCH_COUNTRIES = {
     "AR", "AT", "AU", "BE", "BR", "BG", "CA", "CH", "CL", "CO", "CZ", "DE", "DK",
@@ -197,8 +201,15 @@ def resolve_node_id(entry) -> str:
 
 def fetch_offers(node_id: str, language: str, countries: Iterable[str]) -> dict[str, list]:
     countries_set = {code.upper() for code in countries}
+    cache_key = (node_id, language, tuple(sorted(countries_set)))
+    now = time.time()
+    cached = _OFFERS_CACHE.get(cache_key)
+    if cached and now - cached[0] < OFFERS_CACHE_TTL_SECONDS:
+        return cached[1]
     # Use full offer set so audio/subtitle metadata is not lost to "best offer" pruning.
-    return offers_for_countries(node_id, countries_set, language=language, best_only=False)
+    result = offers_for_countries(node_id, countries_set, language=language, best_only=False)
+    _OFFERS_CACHE[cache_key] = (now, result)
+    return result
 
 
 def _provider_data_for_country(country: str) -> dict[str, str]:

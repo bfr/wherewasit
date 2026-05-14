@@ -25,6 +25,13 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=20260514k" />
 </head>
 <body>
+  <div id="loading-overlay" class="loading-overlay" aria-live="polite" hidden>
+    <div class="loading-card">
+      <div class="loading-spinner" aria-hidden="true"></div>
+      <div class="loading-title">Loading availability…</div>
+      <div class="loading-sub" id="loading-subtext">Fetching title data from JustWatch</div>
+    </div>
+  </div>
   <div class="shell">
 
     {# ── Masthead ────────────────────────────────────────────────────── #}

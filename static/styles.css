@@ -94,6 +94,49 @@ body {
     var(--bg);
   min-height: 100vh;
 }
+.loading-overlay[hidden] { display: none; }
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: color-mix(in oklch, var(--bg) 70%, rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(2px);
+}
+.loading-card {
+  width: min(92vw, 420px);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px 12px;
+  align-items: center;
+}
+.loading-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--rule);
+  border-top-color: var(--accent);
+  animation: spin 800ms linear infinite;
+  grid-row: 1 / span 2;
+}
+.loading-title {
+  font-family: var(--font-ui);
+  font-weight: 700;
+  color: var(--ink);
+}
+.loading-sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-mute);
+}
 
 ::selection { background: color-mix(in oklch, var(--accent) 35%, transparent); color: var(--ink); }
 
