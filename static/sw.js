@@ -5,7 +5,7 @@
 //   - Static assets: cache-first
 //   - Cross-origin fonts/cdn: stale-while-revalidate
 
-const VERSION = "msno-v25";
+const VERSION = "msno-v26";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const HTML_CACHE = `${VERSION}-html`;
@@ -17,6 +17,7 @@ const SHELL_ASSETS = [
   "/static/icons/icon-192.png",
   "/static/icons/icon-512.png",
   "/static/icons/apple-touch-icon.png",
+  "/favicon.ico",
   "/static/icons/favicon.png",
   "/static/icons/favicon-32.png",
   "/manifest.webmanifest",
