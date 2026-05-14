@@ -1,0 +1,5 @@
+- generic [ref=e2]:
+  - heading "No missä se nyt oli?" [level=1] [ref=e3]
+  - paragraph [ref=e4]: Enter password to unlock this personal app.
+  - textbox "Password" [ref=e5]
+  - button "Unlock" [ref=e6] [cursor=pointer]
