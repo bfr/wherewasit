@@ -668,6 +668,12 @@ def manifest():
                                mimetype="application/manifest+json")
 
 
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, "static", "icons"),
+                               "favicon.png", mimetype="image/png")
+
+
 @app.route("/offline")
 def offline_fallback():
     return render_template("offline.html")
