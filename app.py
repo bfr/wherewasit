@@ -552,7 +552,7 @@ def is_authenticated() -> bool:
 def auth_guard():
     if request.path.startswith("/static/"):
         return None
-    if request.path in {"/login", "/sw.js", "/manifest.webmanifest"}:
+    if request.path in {"/login", "/sw.js", "/manifest.webmanifest", "/favicon.ico"}:
         return None
     if is_authenticated():
         return None
