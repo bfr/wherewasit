@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline — Missä se nyt oli?</title>
+  <meta name="theme-color" content="#c25a32" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <div>
+        <h1 class="masthead-title">Missä se nyt <span class="q">oli?</span></h1>
+        <p class="masthead-sub">Offline</p>
+      </div>
+    </header>
+    <div class="empty" style="padding:120px 20px;">
+      No connection.<br />
+      Your last lookup is still cached — go back to view it.
+    </div>
+    <div style="text-align:center;">
+      <button onclick="location.reload()" class="apply-btn" style="cursor:pointer;">Try again</button>
+    </div>
+  </div>
+</body>
+</html>

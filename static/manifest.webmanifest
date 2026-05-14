@@ -1,0 +1,38 @@
+{
+  "name": "No missä se nyt oli? — streaming availability ledger",
+  "short_name": "No missä se nyt oli",
+  "description": "Search a film or series and see where it's streaming, by service and country, with audio + subtitle detail.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#fbfbfa",
+  "theme_color": "#2a5d8f",
+  "lang": "fi-FI",
+  "categories": ["entertainment", "utilities", "productivity"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

@@ -1,0 +1,434 @@
+{# No missä se nyt oli? — streaming availability ledger #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>No missä se nyt oli? — streaming availability ledger</title>
+
+  {# ── PWA ───────────────────────────────────────────────────────────── #}
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#2a5d8f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="No missä se nyt oli" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}" />
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32.png') }}" />
+
+  {# ── Fonts + styles ────────────────────────────────────────────────── #}
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=20260514a" />
+</head>
+<body>
+  <div class="shell">
+
+    {# ── Masthead ────────────────────────────────────────────────────── #}
+    <header class="masthead">
+      <div>
+        <h1 class="masthead-title">No <span class="q">missä</span> se nyt oli?</h1>
+        <p class="masthead-sub">A personal streaming-availability ledger</p>
+      </div>
+      <div class="masthead-meta">
+        <div class="vol">Vol. 04 · Spring 2026</div>
+        <div>Locale <b>FI · EN</b></div>
+        <div>{{ country_order|length }} markets tracked</div>
+      </div>
+    </header>
+
+    {# ── Search ──────────────────────────────────────────────────────── #}
+    <form class="search" method="post" autocomplete="off">
+      <input name="title" placeholder="search a title — past lives, severance, breaking bad…" value="{{ title_query }}" required />
+      <input type="hidden" name="action" value="search" />
+      <button type="submit">Look it up</button>
+    </form>
+
+    {% if error %}
+      <div class="error" role="alert" style="margin-top:14px;color:#b3261e;font-weight:600;">{{ error }}</div>
+    {% endif %}
+
+    {# ── Search results ──────────────────────────────────────────────── #}
+    {% if results %}
+    <section>
+      <div class="section-title">
+        <span>Results</span>
+        <span class="count">{{ results|length }}</span>
+        <span class="rule"></span>
+      </div>
+      <div class="results">
+        {% for r in results %}
+        {% set rid = r.entry_id or r.object_id %}
+        {% set is_selected = selected_node_id and selected_node_id == rid %}
+        <form method="post" class="result-form" style="margin:0;">
+          <input type="hidden" name="action" value="availability" />
+          <input type="hidden" name="title" value="{{ title_query }}" />
+          <input type="hidden" name="selected_title" value="{{ r.title }}" />
+          <input type="hidden" name="selected_object_type" value="{{ r.object_type }}" />
+          <input type="hidden" name="selected_description" value="{{ r.description }}" />
+          <input type="hidden" name="selected_poster_url" value="{{ r.poster_url }}" />
+          <input type="hidden" name="selected_node_id" value="{{ rid }}" />
+          <button type="submit" class="result{% if is_selected %} selected{% endif %}">
+            <div
+              class="result-poster"
+              aria-hidden="true"
+              {% if r.poster_url %}
+              style="background-image:url('{{ r.poster_url|e }}');background-size:cover;background-position:center;"
+              {% endif %}
+            ></div>
+            <div class="result-body">
+              <span class="result-index">№ {{ "%02d"|format(r.index) }}</span>
+              <h3 class="result-title">{{ r.title }}</h3>
+              <div class="result-meta">
+                {{ r.year }} <span class="dot-sep"></span> {{ "Film" if r.object_type == "MOVIE" else "Series" }}
+              </div>
+              <span class="result-cta">
+                {% if is_selected %}● Showing availability{% else %}View availability →{% endif %}
+              </span>
+            </div>
+          </button>
+        </form>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+
+    {# ── Detail view ─────────────────────────────────────────────────── #}
+    {% if availability is not none %}
+    {% set svc_count = availability|length %}
+    {% set fi_count = finland_summary.services|length if finland_summary else 0 %}
+
+    <section id="detail">
+      <div class="section-title">
+        <span>Availability</span>
+        <span class="count">{{ svc_count }} services · {{ total_country_count }} markets</span>
+        <span class="rule"></span>
+      </div>
+
+      {# Hero #}
+      <div class="hero">
+        <div
+          class="hero-poster"
+          aria-hidden="true"
+          {% if selected_poster_url %}
+          style="background-image:url('{{ selected_poster_url|e }}');background-size:cover;background-position:center;"
+          {% endif %}
+        ></div>
+        <div class="hero-body">
+          <p class="hero-eyebrow">Selected title</p>
+          <h2 class="hero-title">{{ selected_title }}</h2>
+          <p class="hero-meta">
+            {{ "Feature film" if selected_object_type == "MOVIE" else "Series" if selected_object_type == "SHOW" else "Title" }}
+          </p>
+          {% if selected_description %}
+          <p class="hero-synopsis">{{ selected_description }}</p>
+          {% endif %}
+          <div class="hero-stats">
+            <div>
+              <div class="stat-num">{{ svc_count }}</div>
+              <div class="stat-lbl">Services</div>
+            </div>
+            <div>
+              <div class="stat-num">{{ total_country_count }}</div>
+              <div class="stat-lbl">Countries</div>
+            </div>
+            <div>
+              <div class="stat-num">{{ fi_count }}</div>
+              <div class="stat-lbl">In Finland</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Finland feature card #}
+      {% if finland_summary %}
+      <div class="fi-feature">
+        <div class="fi-mark">
+          <span class="fi-flag" aria-hidden="true">🇫🇮</span>
+          <div>
+            <div class="lbl">In Finland — Suomessa</div>
+            <div class="head">
+              {% if fi_count == 0 %}— ei näy{% else %}{{ fi_count }} {{ "service" if fi_count == 1 else "services" }}{% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="fi-body">
+          {% if fi_count == 0 %}
+            <p class="fi-status">Not currently available on <em>any tracked service</em> in Finland.</p>
+          {% else %}
+            <p class="fi-status">
+              Available on
+              {% if fi_count == 1 %}
+                <em>{{ finland_summary.services[0].name }}</em>.
+              {% else %}
+                <em>{{ fi_count }} streamers</em>, including <em>{{ finland_summary.services[0].name }}</em>.
+              {% endif %}
+            </p>
+            <div class="fi-services-row">
+              {% for s in finland_summary.services %}
+              <span class="fi-service-pill">
+                {% if s.icon_url %}
+                <img class="svc-logo" src="{{ s.icon_url }}" alt="{{ s.name }} logo" loading="lazy" />
+                {% else %}
+                <span class="mark" aria-hidden="true">{{ svc_initials(s.name) }}</span>
+                {% endif %}
+                {{ s.name }}
+                {% if s.monetization_types %}
+                <span class="mon">{{ monetization_label(s.monetization_types[0]) }}</span>
+                {% endif %}
+              </span>
+              {% endfor %}
+            </div>
+            <div class="fi-langs">
+                {% if finland_summary.audio_languages %}
+              <span class="lang-set">
+                <b>🎧 Audio</b>
+                {% for lang in finland_summary.audio_languages %}
+                <span class="badge {% if is_preferred_language(lang) %}hit{% endif %}">{{ language_flag(lang) }} {{ lang }}</span>
+                {% endfor %}
+              </span>
+              {% else %}
+              <span class="lang-set">
+                <b>🎧 Audio</b>
+                <span class="badge">Unknown</span>
+              </span>
+              {% endif %}
+              {% if finland_summary.subtitle_languages %}
+              <span class="lang-set">
+                <b>💬 Subs</b>
+                {% for lang in finland_summary.subtitle_languages %}
+                <span class="badge {% if is_preferred_language(lang) %}hit{% endif %}">{{ language_flag(lang) }} {{ lang }}</span>
+                {% endfor %}
+              </span>
+              {% else %}
+              <span class="lang-set">
+                <b>💬 Subs</b>
+                <span class="badge">Unknown</span>
+              </span>
+              {% endif %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {# Filters #}
+      <form class="filters" method="post" id="filters-form">
+        <input type="hidden" name="action" value="availability" />
+        <input type="hidden" name="title" value="{{ title_query }}" />
+        <input type="hidden" name="selected_title" value="{{ selected_title }}" />
+        <input type="hidden" name="selected_object_type" value="{{ selected_object_type or '' }}" />
+        <input type="hidden" name="selected_description" value="{{ selected_description or '' }}" />
+        <input type="hidden" name="selected_poster_url" value="{{ selected_poster_url or '' }}" />
+        <input type="hidden" name="selected_node_id" value="{{ selected_node_id }}" />
+
+        <div class="filters-row">
+          <span class="filter-label">Monetization</span>
+          <div class="pills">
+            {% for mt in monetization_options %}
+            <label class="pill checkbox-pill{% if mt in selected_monetizations %} on{% endif %}">
+              <input type="checkbox" name="monetizations" value="{{ mt }}" {% if mt in selected_monetizations %}checked{% endif %} hidden />
+              <span class="ico">●</span> {{ monetization_label(mt) }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <span class="filter-label">Audio languages</span>
+          <div class="pills">
+            {% for lang in audio_language_options %}
+            <label class="pill lang checkbox-pill{% if lang in selected_audio_languages %} on{% endif %}">
+              <input type="checkbox" name="audio_languages" value="{{ lang }}" {% if lang in selected_audio_languages %}checked{% endif %} hidden />
+              <span class="flag">{{ language_flag(lang) }}</span> {{ lang }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <span class="filter-label">Subtitles</span>
+          <div class="pills">
+            {% for lang in subtitle_language_options %}
+            <label class="pill lang checkbox-pill{% if lang in selected_subtitle_languages %} on{% endif %}">
+              <input type="checkbox" name="subtitle_languages" value="{{ lang }}" {% if lang in selected_subtitle_languages %}checked{% endif %} hidden />
+              <span class="flag">{{ language_flag(lang) }}</span> {{ lang }}
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="filters-row">
+          <span class="filter-label">Services</span>
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%;">
+            <select id="services-select" name="services" multiple style="flex:1;min-width:240px;">
+              {% for service in service_options %}
+              <option
+                value="{{ service.name }}"
+                data-available="{{ 1 if service.available else 0 }}"
+                data-icon="{{ service.icon_url }}"
+                {% if service.name in selected_services %}selected{% endif %}
+              >
+                {{ service.name }}
+              </option>
+              {% endfor %}
+            </select>
+            <button type="button" id="services-clear" class="filter-clear">Clear remembered</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;align-items:center;justify-content:flex-end;">
+          <button type="reset" class="filter-clear" id="filters-reset">Reset filters</button>
+          <button type="submit" class="apply-btn">Apply filters</button>
+        </div>
+      </form>
+
+      {# Ledger #}
+      {% if availability %}
+      <div class="ledger">
+        <div class="ledger-head">
+          <span>Service</span>
+          <span class="h-world">
+            Markets
+            <span class="legend">
+              <span class="lg-item"><span class="sw sw-fi"></span> Finland</span>
+              <span class="lg-item"><span class="sw sw-en"></span> EN audio + subs</span>
+              <span class="lg-item"><span class="sw sw-on"></span> Available</span>
+            </span>
+          </span>
+          <span class="h-count" style="text-align:right;">Reach</span>
+        </div>
+
+        {% for service, info in availability.items() %}
+        {% set in_fi = "FI" in info.countries %}
+        {% set on_set = info.countries|map('upper')|list %}
+        {% set audio_to_subs_by_country = {} %}
+        {% for c in info.by_country %}{% set _ = audio_to_subs_by_country.update({c.country: c}) %}{% endfor %}
+
+        <div class="ledger-row" data-service="{{ service }}">
+          <div class="svc-cell">
+            {% if info.icon_url %}
+            <img class="svc-logo-tile{% if in_fi %} accent{% endif %}" src="{{ info.icon_url }}" alt="{{ service }} logo" loading="lazy" />
+            {% else %}
+            <span class="svc-mark{% if in_fi %} accent{% endif %}" aria-hidden="true">{{ svc_initials(service) }}</span>
+            {% endif %}
+            <div style="min-width:0;">
+              <h4 class="svc-name" title="{{ service }}">{{ service }}</h4>
+              <div class="svc-meta">
+                {% if info.monetization_types %}
+                <span class="mon">{{ monetization_label(info.monetization_types[0]) }}</span>
+                <span class="dot-sep"></span>
+                {% endif %}
+                {{ info.audio_languages|length }} audio
+                <span class="dot-sep"></span>
+                {{ info.subtitle_languages|length }} subs
+              </div>
+              {% if info.offer_types %}
+              <div class="svc-offers">
+                {% for t in info.offer_types %}
+                <span class="offer-badge">
+                  <b>{{ t.label }}</b>
+                  {% if t.prices %}
+                  <span class="offer-price">{{ t.prices[0] }}</span>
+                  {% endif %}
+                  {% if t.presentations %}
+                  <span class="offer-pres">{{ t.presentations[0] }}</span>
+                  {% endif %}
+                </span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div>
+            <div class="world-strip">
+              {% for code in country_order %}
+                {% set c = audio_to_subs_by_country.get(code) %}
+                {% set is_on = c is not none %}
+                {% set is_fi = code == "FI" %}
+                {% set hl = c.highlight if c else "" %}
+                {% set en_pair = is_on and hl == "has-en-pair" and not is_fi %}
+                <span
+                  class="country-dot{% if is_on %} on{% endif %}{% if is_fi %} fi{% endif %}{% if is_fi and not is_on %} off{% endif %}{% if en_pair %} en-pair{% endif %}"
+                  data-tip="{{ country_names.get(code, code) }} · {{ code }} {{ '✓' if is_on else '—' }}{% if en_pair %} · EN/EN{% endif %}"
+                >{% if is_on or is_fi %}{{ country_flag(code) }}{% endif %}</span>
+              {% endfor %}
+            </div>
+          </div>
+
+          <div class="svc-count">
+            {{ info.countries|length }}
+            <span class="of">of {{ country_order|length }} mkts</span>
+          </div>
+
+          <details class="row-details">
+            <summary class="row-toggle">
+              <span class="arr" aria-hidden="true">▸</span>
+              <span class="row-toggle-label">Per-country detail</span>
+            </summary>
+            <div class="row-expand">
+              {% for c in info.by_country %}
+              {% set is_fi = c.country == "FI" %}
+              {% set hl = c.highlight %}
+              <div class="country-detail{% if is_fi %} fi{% endif %}{% if hl %} {{ hl }}{% endif %}">
+              {% if hl == "has-fi-subs" %}
+              <span class="cd-tag tag-fi" title="Finnish subtitles available">🇫🇮 FI subs</span>
+              {% elif hl == "has-en-pair" %}
+              <span class="cd-tag tag-en" title="English audio &amp; subtitles">EN ⇄ EN</span>
+              {% endif %}
+              <div class="ch">
+                <span class="fl">{{ country_flag(c.country) }}</span>
+                <span class="nm">{{ country_names.get(c.country, c.country) }}</span>
+                <span class="code">{{ c.country }}</span>
+              </div>
+              <div class="ll">🎧 Audio</div>
+              <div class="badges">
+                {% if c.audio_languages %}
+                  {% for lang in c.audio_languages %}
+                  <span class="lbadge {% if is_preferred_language(lang) %}hit{% endif %}">
+                    <span class="fl">{{ language_flag(lang) }}</span>{{ lang }}
+                  </span>
+                  {% endfor %}
+                {% else %}
+                  <span class="lbadge">Unknown</span>
+                {% endif %}
+              </div>
+              <div class="ll">💬 Subtitles</div>
+              <div class="badges">
+                {% if c.subtitle_languages %}
+                  {% for lang in c.subtitle_languages %}
+                  <span class="lbadge {% if lang|upper == 'FI' %}hit-fi{% elif is_preferred_language(lang) %}hit{% endif %}">
+                    <span class="fl">{{ language_flag(lang) }}</span>{{ lang }}
+                  </span>
+                  {% endfor %}
+                {% else %}
+                  <span class="lbadge">Unknown</span>
+                {% endif %}
+              </div>
+              </div>
+              {% endfor %}
+            </div>
+          </details>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="ledger"><div class="empty">No streaming offers match those filters.</div></div>
+      {% endif %}
+    </section>
+    {% endif %}
+
+    <footer class="foot">
+      <span>No missä se nyt oli — data via JustWatch</span>
+      <span>Locale FI · EN · {{ country_order|length }} markets</span>
+    </footer>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}?v=20260514a"></script>
+</body>
+</html>

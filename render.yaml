@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: no-missa-se-nyt-oli
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    autoDeploy: true
+    envVars:
+      - key: MSNO_PASSWORD
+        sync: false
+      - key: MSNO_SECRET_KEY
+        generateValue: true
