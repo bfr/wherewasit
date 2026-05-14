@@ -1,6 +1,6 @@
 {# No missä se nyt oli? — streaming availability ledger #}
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="ink">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -14,23 +14,26 @@
   <meta name="apple-mobile-web-app-title" content="No missä se nyt oli" />
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/apple-touch-icon.png') }}" />
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='icons/favicon.png') }}" />
   <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='icons/favicon-32.png') }}" />
 
   {# ── Fonts + styles ────────────────────────────────────────────────── #}
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@400;600;700&family=Spectral:wght@400;500;600&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=20260514a" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}?v=20260514k" />
 </head>
 <body>
   <div class="shell">
 
     {# ── Masthead ────────────────────────────────────────────────────── #}
     <header class="masthead">
-      <div>
-        <h1 class="masthead-title">No <span class="q">missä</span> se nyt oli?</h1>
-        <p class="masthead-sub">A personal streaming-availability ledger</p>
+      <div
+        class="masthead-art"
+        style="background-image:url('{{ url_for('static', filename='banner.png') }}');"
+      >
+        <h1 class="masthead-title">No missä se nyt oli?</h1>
       </div>
       <div class="masthead-meta">
         <div class="vol">Vol. 04 · Spring 2026</div>
