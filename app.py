@@ -718,7 +718,7 @@ def manifest():
 @app.route("/favicon.ico")
 def favicon():
     return send_from_directory(os.path.join(app.root_path, "static", "icons"),
-                               "favicon.png", mimetype="image/png")
+                               "favicon.ico", mimetype="image/x-icon")
 
 
 @app.route("/offline")
