@@ -52,7 +52,7 @@
     </header>
 
     {# ── Search ──────────────────────────────────────────────────────── #}
-    <form class="search" method="post" autocomplete="off">
+    <form class="search" method="get" autocomplete="off">
       <input name="title" placeholder="search a title — past lives, severance, breaking bad…" value="{{ title_query }}" required />
       <input type="hidden" name="action" value="search" />
       <button type="submit">Look it up</button>
@@ -74,7 +74,7 @@
         {% for r in results %}
         {% set rid = r.entry_id or r.object_id %}
         {% set is_selected = selected_node_id and selected_node_id == rid %}
-        <form method="post" class="result-form" style="margin:0;">
+        <form method="get" class="result-form" style="margin:0;">
           <input type="hidden" name="action" value="availability" />
           <input type="hidden" name="title" value="{{ title_query }}" />
           <input type="hidden" name="selected_title" value="{{ r.title }}" />
@@ -227,7 +227,7 @@
       {% endif %}
 
       {# Filters #}
-      <form class="filters" method="post" id="filters-form">
+      <form class="filters" method="get" id="filters-form">
         <input type="hidden" name="action" value="availability" />
         <input type="hidden" name="title" value="{{ title_query }}" />
         <input type="hidden" name="selected_title" value="{{ selected_title }}" />

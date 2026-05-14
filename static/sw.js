@@ -5,7 +5,7 @@
 //   - Static assets: cache-first
 //   - Cross-origin fonts/cdn: stale-while-revalidate
 
-const VERSION = "msno-v31";
+const VERSION = "msno-v32";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const HTML_CACHE = `${VERSION}-html`;

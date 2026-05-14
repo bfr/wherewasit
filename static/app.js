@@ -12,6 +12,14 @@
     if (loadingSub && message) loadingSub.textContent = message;
     loadingOverlay.hidden = false;
   }
+  function hideLoading() {
+    if (!loadingOverlay) return;
+    loadingOverlay.hidden = true;
+  }
+
+  // Back/forward cache can restore previous DOM state with overlay visible.
+  window.addEventListener("pageshow", hideLoading);
+  window.addEventListener("load", hideLoading);
 
   document.querySelectorAll("form.result-form").forEach((form) => {
     form.addEventListener("submit", () => {

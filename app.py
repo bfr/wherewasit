@@ -461,6 +461,87 @@ def summarize_finland(availability: dict[str, dict[str, object]]) -> dict | None
     }
 
 
+def apply_availability_request(context: dict, params) -> None:
+    selected_node_id = params.get("selected_node_id", "").strip()
+    selected_title = params.get("selected_title", "").strip()
+    selected_object_type = params.get("selected_object_type", "").strip()
+    selected_description = params.get("selected_description", "").strip()
+    selected_poster_url = params.get("selected_poster_url", "").strip()
+    if not selected_node_id:
+        raise ValueError("No result selected.")
+
+    selected_services = set(params.getlist("services"))
+    selected_monetizations = {
+        value.strip().upper()
+        for value in params.getlist("monetizations")
+        if value.strip()
+    }
+    selected_audio_languages = {
+        value.strip().upper()
+        for value in params.getlist("audio_languages")
+        if value.strip()
+    }
+    selected_subtitle_languages = {
+        value.strip().upper()
+        for value in params.getlist("subtitle_languages")
+        if value.strip()
+    }
+
+    offers_by_country = fetch_offers(
+        node_id=selected_node_id,
+        language=context["language"],
+        countries=JUSTWATCH_COUNTRIES,
+    )
+    (
+        title_service_options,
+        monetization_options,
+        audio_language_options,
+        subtitle_language_options,
+    ) = collect_filter_options(offers_by_country)
+    available_services = set(title_service_options)
+    available_service_icons = extract_service_icons_from_offers(offers_by_country)
+    market_service_icons = global_market_service_catalog()
+    market_service_names = set(market_service_icons.keys())
+    service_options = build_service_options(
+        available_services=available_services,
+        market_service_names=market_service_names,
+        selected_services=selected_services,
+        market_service_icons=market_service_icons,
+        available_service_icons=available_service_icons,
+    )
+
+    if not selected_monetizations:
+        selected_monetizations = set(monetization_options)
+
+    full_availability = group_services(offers_by_country)
+    availability = group_services(
+        offers_by_country,
+        selected_monetization_types=selected_monetizations,
+        selected_services=selected_services,
+        selected_audio_languages=selected_audio_languages,
+        selected_subtitle_languages=selected_subtitle_languages,
+    )
+
+    total_country_count = len({c for info in availability.values() for c in info["countries"]})
+
+    context["selected_title"] = selected_title or context["title_query"]
+    context["selected_object_type"] = selected_object_type or None
+    context["selected_description"] = selected_description
+    context["selected_poster_url"] = selected_poster_url
+    context["selected_node_id"] = selected_node_id
+    context["service_options"] = service_options
+    context["monetization_options"] = monetization_options
+    context["audio_language_options"] = audio_language_options
+    context["subtitle_language_options"] = subtitle_language_options
+    context["selected_services"] = sorted(selected_services)
+    context["selected_monetizations"] = sorted(selected_monetizations)
+    context["selected_audio_languages"] = sorted(selected_audio_languages)
+    context["selected_subtitle_languages"] = sorted(selected_subtitle_languages)
+    context["availability"] = availability
+    context["total_country_count"] = total_country_count
+    context["finland_summary"] = summarize_finland(full_availability)
+
+
 def is_authenticated() -> bool:
     if not APP_PASSWORD:
         return True
@@ -562,88 +643,43 @@ def index():
                 ]
 
             elif action == "availability":
-                selected_node_id = request.form.get("selected_node_id", "").strip()
-                selected_title = request.form.get("selected_title", "").strip()
-                selected_object_type = request.form.get("selected_object_type", "").strip()
-                selected_description = request.form.get("selected_description", "").strip()
-                selected_poster_url = request.form.get("selected_poster_url", "").strip()
-                if not selected_node_id:
-                    raise ValueError("No result selected.")
+                apply_availability_request(context, request.form)
 
-                selected_services = set(request.form.getlist("services"))
-                selected_monetizations = {
-                    value.strip().upper()
-                    for value in request.form.getlist("monetizations")
-                    if value.strip()
-                }
-                selected_audio_languages = {
-                    value.strip().upper()
-                    for value in request.form.getlist("audio_languages")
-                    if value.strip()
-                }
-                selected_subtitle_languages = {
-                    value.strip().upper()
-                    for value in request.form.getlist("subtitle_languages")
-                    if value.strip()
-                }
-
-                offers_by_country = fetch_offers(
-                    node_id=selected_node_id,
+        except ValueError as exc:
+            context["error"] = str(exc)
+        except (JustWatchApiError, JustWatchHttpError) as exc:
+            context["error"] = f"JustWatch API error: {exc}"
+    else:
+        context["title_query"] = request.args.get("title", "").strip()
+        context["search_country"] = DEFAULT_SEARCH_COUNTRY
+        context["language"] = DEFAULT_LANGUAGE
+        action = request.args.get("action", "").strip()
+        try:
+            if action == "search" and context["title_query"]:
+                entries = search(
+                    title=context["title_query"],
+                    country=context["search_country"],
                     language=context["language"],
-                    countries=JUSTWATCH_COUNTRIES,
+                    count=8,
+                    best_only=True,
                 )
-                (
-                    title_service_options,
-                    monetization_options,
-                    audio_language_options,
-                    subtitle_language_options,
-                ) = collect_filter_options(offers_by_country)
-                available_services = set(title_service_options)
-                available_service_icons = extract_service_icons_from_offers(offers_by_country)
-                market_service_icons = global_market_service_catalog()
-                market_service_names = set(market_service_icons.keys())
-                service_options = build_service_options(
-                    available_services=available_services,
-                    market_service_names=market_service_names,
-                    selected_services=selected_services,
-                    market_service_icons=market_service_icons,
-                    available_service_icons=available_service_icons,
-                )
-
-                if not selected_monetizations:
-                    selected_monetizations = set(monetization_options)
-
-                # Unfiltered title-wide availability for always-on Finland summary card.
-                full_availability = group_services(offers_by_country)
-                availability = group_services(
-                    offers_by_country,
-                    selected_monetization_types=selected_monetizations,
-                    selected_services=selected_services,
-                    selected_audio_languages=selected_audio_languages,
-                    selected_subtitle_languages=selected_subtitle_languages,
-                )
-
-                total_country_count = len(
-                    {c for info in availability.values() for c in info["countries"]}
-                )
-
-                context["selected_title"] = selected_title or context["title_query"]
-                context["selected_object_type"] = selected_object_type or None
-                context["selected_description"] = selected_description
-                context["selected_poster_url"] = selected_poster_url
-                context["selected_node_id"] = selected_node_id
-                context["service_options"] = service_options
-                context["monetization_options"] = monetization_options
-                context["audio_language_options"] = audio_language_options
-                context["subtitle_language_options"] = subtitle_language_options
-                context["selected_services"] = sorted(selected_services)
-                context["selected_monetizations"] = sorted(selected_monetizations)
-                context["selected_audio_languages"] = sorted(selected_audio_languages)
-                context["selected_subtitle_languages"] = sorted(selected_subtitle_languages)
-                context["availability"] = availability
-                context["total_country_count"] = total_country_count
-                context["finland_summary"] = summarize_finland(full_availability)
-
+                if not entries:
+                    raise ValueError("No results found.")
+                context["results"] = [
+                    {
+                        "index": i,
+                        "title": entry.title,
+                        "year": entry.release_year or "?",
+                        "object_type": entry.object_type,
+                        "poster_url": extract_poster_url(getattr(entry, "poster", None)),
+                        "description": (getattr(entry, "short_description", "") or "").strip(),
+                        "entry_id": getattr(entry, "entry_id", ""),
+                        "object_id": getattr(entry, "object_id", ""),
+                    }
+                    for i, entry in enumerate(entries, start=1)
+                ]
+            elif action == "availability":
+                apply_availability_request(context, request.args)
         except ValueError as exc:
             context["error"] = str(exc)
         except (JustWatchApiError, JustWatchHttpError) as exc:
