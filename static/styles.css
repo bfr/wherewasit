@@ -1092,20 +1092,33 @@ body {
 /* expand toggle */
 .row-toggle {
   appearance: none;
-  border: 0;
-  background: transparent;
+  border: 1px solid color-mix(in oklch, var(--accent) 45%, var(--rule));
+  background: color-mix(in oklch, var(--accent) 24%, var(--paper));
   font-family: var(--font-mono);
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: var(--ink-mute);
+  color: #5d4608;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 8px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  user-select: none;
+  transition: border-color 120ms ease, color 120ms ease, background 120ms ease, transform 80ms ease;
 }
-.row-toggle:hover { color: var(--accent); }
+.row-toggle:hover {
+  color: #3f2f06;
+  border-color: color-mix(in oklch, var(--accent) 70%, var(--rule));
+  background: color-mix(in oklch, var(--accent) 36%, var(--paper));
+}
+.row-toggle:focus-visible {
+  outline: 2px solid color-mix(in oklch, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+}
+.row-toggle:active { transform: scale(0.98); }
 .row-toggle .arr {
   transition: transform 180ms;
   display: inline-block;
